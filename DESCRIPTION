@@ -1,0 +1,13 @@
+Package: yycr
+Type: Package
+Title: self-made tools
+Version: 0.1.0
+Authors@R: person('Yuchuan','Yang',email = '...',role = c('aut','cre'))
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: Summary statistics and describe data.
+License: MIT
+Encoding: UTF-8
+Imports: tidyverse
+LazyData: false
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
