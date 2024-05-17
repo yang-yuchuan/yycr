@@ -1,5 +1,13 @@
 # yycr: Some neat implementations to handle data in R.
 
+## Description
+
+Package `yycr` integrates several implementations in `R`, which may be frequently used and simple, but sometimes require several lines of code. It aims to make these execuse available **in one line**.
+
+It now has 2 sections: summarization, and dpp (data preprocessing).
+
+## Functions
+
 This package, for now, provides two functions to implement some frequently (maybe) used execuses in `R`:
 
 - `sum_na()`: summarise how many missing values are there in your data. Show the results in percentage value. It also support group by for this operation. This may be useful when, say, you want to know how many firms have non-missing patent application in each year.
