@@ -21,23 +21,24 @@
 #' sum_na(data, -y)
 #' sum_na(data, x2, y, by = x1)
 #' @export
-sum_na = function(data, ..., by = NULL) {
+sum_na = function(data, ..., zero = F, by = NULL) {
   library(dplyr)
-  library(rlang)
 
   byvar <- enquo(by)
   vars <- enquos(...)
 
-  if (length(vars) == 0) {
-    reframe(data, across(everything(), \(x) sum(is.na(x)) / n() * 100) %>% signif(2), .by = !!byvar)
-  } else {
-    reframe(data, across(c(!!!vars), \(x) sum(is.na(x)) / n() * 100) %>% signif(2), .by = !!byvar)
+  naprop = function(x) {
+    if (zero) signif(sum(is.na(x) | x == 0) / n() * 100, 3)
+    else signif(sum(is.na(x)) / n() * 100, 3)
   }
+
+  if (length(vars) == 0) reframe(data, across(everything(), naprop), .by = !!byvar)
+  else reframe(data, across(c(!!!vars), naprop), .by = !!byvar)
 }
 
 
 sum_basic = function(data, vars, stats = c("obs", "mean", "sd", "min", "max"),
-                     valid = 4, digits = NULL) {
+                     valid = 4) {
   library(tidyverse)
 
   data %>%
@@ -57,25 +58,26 @@ sum_basic = function(data, vars, stats = c("obs", "mean", "sd", "min", "max"),
       names_pattern = "(.*)_(obs|mean|sd|min|p10|p25|med|p75|p90|max)"
     ) %>%
     pivot_wider(id_cols = var, names_from = .values, values_from = value) %>%
-    mutate(across(-var, ~ tab_validnum(.x, valid = valid, digits = digits))) %>%
+    mutate(across(-var, ~ tab_validnum(.x, valid = valid))) %>%
     select(var, any_of(stats))
 }
 
-
-tab_validnum = function(x, valid = 4, digits = NULL) {
-  library(tidyverse)
-
-  if (!is.null(digits)) {
-    warning("Setting digits may cause different valid numbers, e.g., 0.14 & 1.14")
-    round(x, digits = digits)
-  } else {
-    x <- as.character(x)
-    if (stringr::str_detect(x, "^0|^\\-0")) {
-      x %>% as.numeric() %>% round(digits = valid)
-    } else {
-      intnum <- stringr::str_match(x, "^(\\-|)(.*)\\.")[, 3] %>%
-        stringr::str_length()
-      x %>% as.numeric() %>% round(digits = valid - intnum)
-    }
-  }
+#' Unify valid number
+#'
+#' People want their results in summary statistics or regression tables to have
+#' uniform valid numbers. However, `round()` and `signif()` in **baseR** will produce
+#' different results when `x` cross 1. `tab_validnum` handles this by adding one
+#' to the digits in `signif()` if `x` is greater than 1.
+#'
+#' @param x A numeric vector.
+#' @param valid Valid numbers.
+#'
+#' @examples
+#' tab_validnum(0.0423, 3); tab_validnum(1.0423, 3)
+#' tab_validnum(1.4234, 3); tab_validnum(22.4234, 3)
+#' @export
+tab_validnum = function(x, valid = 4) {
+  ifelse(x > 1, signif(x, digits = valid + 1), round(x, digits = valid))
 }
+
+
